@@ -84,7 +84,7 @@ def get_batches(sentences, labels, batch_size, max_len=400, type="cnn"):
     lab_batch = [labels[t] for t in minibatch]
     if type == "cnn":
       seq = tf.keras.preprocessing.sequence.pad_sequences(seq_batch, max_len)
-      seq_len = None
+      seq_len = [max_len] * batch_size
     elif type == "rnn":
       seq, seq_len = padding_data_for_rnn(seq_batch)
     all_batches.append((seq, seq_len, lab_batch))
