@@ -12,6 +12,7 @@ class Base(object):
 
     self.input_x = tf.placeholder(tf.int32, [None, self.sentence_length], name='input_x')
     self.input_y = tf.placeholder(tf.float32, [None, self.nb_classes], name='input_y')
+    self.sequence_length = tf.placeholder(tf.int32, [None], name="sequence_length")
     self.keep_prob = tf.placeholder(tf.float32, name="keep_prob")
 
     self.batch_size = tf.shape(self.input_y)[0]
@@ -120,7 +121,6 @@ class TextRNN(Base):
   def __init__(self, args, name=None):
     super(TextRNN, self).__init__(args=args, name=name)
     self.hidden_size = args.hidden_size
-    self.sequence_length = tf.placeholder(tf.int32, [None], name="sequence_length")
 
     with tf.variable_scope("rnn"):
       cell = tf.contrib.rnn.LSTMCell(self.hidden_size)
