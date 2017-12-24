@@ -43,6 +43,21 @@ class Base(object):
     tf.summary.histogram('/activation', summary)
     tf.summary.scalar('/sparsity', tf.nn.zero_fraction(summary))
 
+  def train(self, sess, input_x, sequence_length, input_y, keep_prob):
+    return sess.run([self.train_op, 
+                     self.loss,
+                     self.accuracy,
+                     self.global_step,
+                     self.batch_size,
+                     self.summary], 
+                     feed_dict={self.input_x: input_x, self.input_y: input_y, 
+                                self.keep_prob: keep_prob, self.sequence_length: sequence_length})
+
+  def test(self, sess, input_x, sequence_length, input_y, keep_prob):
+    return sess.run([self.accuracy,self.batch_size], 
+                    feed_dict={self.input_x: input_x, self.input_y: input_y, 
+                               self.keep_prob: keep_prob, self.sequence_length: sequence_length})
+
 class TextCNN(Base):
   def __init__(self, args, name=None):
     self.filter_sizes = args.filter_sizes
@@ -101,23 +116,39 @@ class TextCNN(Base):
 
     self.summary = tf.summary.merge_all()
 
-  def train(self, sess, input_x, input_y, keep_prob):
-    return sess.run([self.train_op, 
-                     self.loss,
-                     self.accuracy,
-                     self.global_step,
-                     self.batch_size,
-                     self.summary], 
-                     feed_dict={self.input_x: input_x, self.input_y: input_y, self.keep_prob: keep_prob})
-
-  def test(self, sess, input_x, input_y, keep_prob):
-    return sess.run([self.accuracy,self.batch_size], 
-                    feed_dict={self.input_x: input_x, self.input_y: input_y, self.keep_prob: keep_prob})
-
 class TextRNN(Base):
   def __init__(self, args, name=None):
     super(TextRNN, self).__init__(args=args, name=name)
     self.hidden_size = args.hidden_size
-    
+    self.sequence_length = tf.placeholder(tf.int32, [None], name="sequence_length")
+
     with tf.variable_scope("rnn"):
       cell = tf.contrib.rnn.LSTMCell(self.hidden_size)
+      rnn_output, rnn_state = tf.nn.dynamic_rnn(cell=cell, 
+                                                inputs=self.embed_inp, 
+                                                dtype=tf.float32,
+                                                sequence_length=self.sequence_length)
+      self.rnn_state = tf.concat(rnn_state, 1)
+
+    with tf.name_scope("output"):
+      self.scores = tf.layers.dense(self.rnn_state, self.nb_classes, name="scores")
+      self.predictions = tf.argmax(self.scores, 1, name="predictions")
+      self.activation_summary(self.scores)
+
+    with tf.name_scope("loss"):
+      losses = tf.nn.softmax_cross_entropy_with_logits(logits=self.scores, labels=self.input_y)
+      self.loss = tf.reduce_mean(losses)
+      tf.summary.scalar("/cross_entropy", self.loss)
+
+    with tf.name_scope("accuracy"):
+      correct_predictions = tf.equal(self.predictions, tf.argmax(self.input_y, 1))
+      self.accuracy = tf.reduce_mean(tf.cast(correct_predictions, tf.float32), name="accuracy")
+      tf.summary.scalar("/accuracy", self.accuracy)
+
+    with tf.name_scope('train'):
+      grads_and_vars = self.optimizer.compute_gradients(self.loss)
+      grads_and_vars = [(tf.clip_by_norm(g, self.max_grad_norm), v) for g, v in grads_and_vars]
+      self.train_op = self.optimizer.apply_gradients(grads_and_vars, global_step=self.global_step)
+
+    self.summary = tf.summary.merge_all()
+
