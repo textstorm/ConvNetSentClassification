@@ -9,7 +9,7 @@ def get_args():
   parser.add_argument('--log_dir', type=str, default='save/logs')
   parser.add_argument('--save_dir', type=str, default='save/saves')
   parser.add_argument('--nb_classes', type=int, default=2)
-  parser.add_argument('--model_type', type=str, default="cnn")
+  parser.add_argument('--model_type', type=str, default="rnn")
 
   parser.add_argument('--sentence_length', type=int, default=400, help='The length of input x')
   parser.add_argument('--vocab_size', type=int, default=10000, help='data vocab size')
