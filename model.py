@@ -10,7 +10,7 @@ class Base(object):
     self.embed_size = args.embed_size
     self.max_grad_norm = args.max_grad_norm
 
-    self.input_x = tf.placeholder(tf.int32, [None, self.sentence_length], name='input_x')
+    self.input_x = tf.placeholder(tf.int32, [None, None], name='input_x')
     self.input_y = tf.placeholder(tf.float32, [None, self.nb_classes], name='input_y')
     self.sequence_length = tf.placeholder(tf.int32, [None], name="sequence_length")
     self.keep_prob = tf.placeholder(tf.float32, name="keep_prob")
@@ -121,14 +121,25 @@ class TextRNN(Base):
   def __init__(self, args, name=None):
     super(TextRNN, self).__init__(args=args, name=name)
     self.hidden_size = args.hidden_size
+    self.model_type = args.model_type
 
     with tf.variable_scope("rnn"):
-      cell = tf.contrib.rnn.LSTMCell(self.hidden_size)
-      rnn_output, rnn_state = tf.nn.dynamic_rnn(cell=cell, 
-                                                inputs=self.embed_inp, 
-                                                dtype=tf.float32,
-                                                sequence_length=self.sequence_length)
-      self.rnn_state = tf.concat(rnn_state, 1)
+      if self.encoder_type == "rnn":
+        cell = tf.contrib.rnn.LSTMCell(self.hidden_size)
+        rnn_output, rnn_state = tf.nn.dynamic_rnn(cell=cell, 
+                                                  inputs=self.embed_inp, 
+                                                  dtype=tf.float32,
+                                                  sequence_length=self.sequence_length)
+        self.rnn_state = tf.concat(rnn_state, 1)
+      elif self.model_type == "bi_rnn":
+        fw_cell = tf.contrib.rnn.LSTMCell(self.hidden_size)
+        bw_cell = tf.contrib.rnn.LSTMCell(self.hidden_size)
+        rnn_output, rnn_state = tf.nn.bidirectional_dynamic_rnn(cell_fw=fw_cell, 
+                                                                cell_bw=bw_cell, 
+                                                                inputs=self.embed_inp,
+                                                                dtype=tf.float32, 
+                                                                sequence_length=self.sequence_length)
+        self.rnn_state = tf.concat(rnn_output, 1)
 
     with tf.name_scope("output"):
       self.scores = tf.layers.dense(self.rnn_state, self.nb_classes, name="scores")
