@@ -7,6 +7,8 @@ import pandas as pd
 from model import TextCNN, TextRNN
 import tensorflow as tf
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "1"
+
 def main(args):
   print "loadding reviews and labels from dataset"
   data = pd.read_csv('data/labeledTrainData.tsv.zip', compression='zip', delimiter='\t', 
@@ -41,7 +43,7 @@ def main(args):
     if args.model_type == "cnn":
       model = TextCNN(args, "TextCNN")
       test_batch = utils.get_batches(test_x, test_y, args.max_size)
-    elif args.model_type == "rnn":
+    elif args.model_type in ["rnn", "bi_rnn"]:
       model = TextRNN(args, "TextRNN")
       test_batch = utils.get_batches(test_x, test_y, args.max_size, type="rnn")
 
@@ -57,7 +59,7 @@ def main(args):
       accuracy = 0.
       if args.model_type == "cnn":
         train_batch = utils.get_batches(train_x, train_y, args.batch_size)
-      elif args.model_type == "rnn":
+      elif args.model_type in ["rnn", "bi_rnn"]:
         train_batch = utils.get_batches(train_x, train_y, args.batch_size, type="rnn")
       epoch_start_time = time.time()
       step_start_time = epoch_start_time
