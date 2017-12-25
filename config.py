@@ -9,7 +9,7 @@ def get_args():
   parser.add_argument('--log_dir', type=str, default='save/logs')
   parser.add_argument('--save_dir', type=str, default='save/saves')
   parser.add_argument('--nb_classes', type=int, default=2)
-  parser.add_argument('--model_type', type=str, default="rnn")
+  parser.add_argument('--model_type', type=str, default="bi_rnn")
 
   parser.add_argument('--sentence_length', type=int, default=400, help='The length of input x')
   parser.add_argument('--vocab_size', type=int, default=10000, help='data vocab size')
@@ -21,7 +21,7 @@ def get_args():
 
   parser.add_argument('--batch_size', type=int, default=32, help='Example numbers every batch')
   parser.add_argument('--max_size', type=int, default=1000, help='max numbers every batch')
-  parser.add_argument('--nb_epochs', type=int, default=20, help='Number of epoch')
+  parser.add_argument('--nb_epochs', type=int, default=8, help='Number of epoch')   #rnn 7.8
   parser.add_argument('--learning_rate', type=float, default=0.0001, help='Initial learning rate')
   parser.add_argument('--max_grad_norm', type=float, default=10.0, help='Max norm of gradient')
 
